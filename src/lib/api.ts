@@ -1,6 +1,6 @@
 export async function getData(coords: { lat: number; lng: number }) {
     // Base backend URL (no trailing slash to make concat predictable)
-    const apilink = "https://tourguidebackend.fly.dev/api";
+    const apilink = "https://tourguidebackend.fly.dev";
 
     const imageUrl =
         "https://www.tclf.org/sites/default/files/thumbnails/image/HarvardUniversity-sig.jpg";
@@ -9,15 +9,23 @@ export async function getData(coords: { lat: number; lng: number }) {
         "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3";
 
     try {
-        const url = `${apilink}/tour?lat=${encodeURIComponent(
-            coords.lat
-        )}&lon=${encodeURIComponent(coords.lng)}`;
-        const res = await fetch(url);
+        const url = `${apilink}/audio`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                latitude: coords.lat,
+                longitude: coords.lng
+            })
+        });
+        
         if (!res.ok) throw new Error(`API responded with status ${res.status}`);
-        const data = await res.json();
-
-        // Accept a few possible field names from the backend
-        const voiceUrl = data.voiceUrl || data.url || data.audioUrl || data.audio || defaultVoiceUrl;
+        
+        // The API returns an MP3 file directly, so we need to create a blob URL
+        const audioBlob = await res.blob();
+        const voiceUrl = URL.createObjectURL(audioBlob);
 
         return {
             imageUrl,
