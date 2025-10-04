@@ -9,12 +9,35 @@ import { motion } from "framer-motion";
 import { useLocation } from "./hooks/useLocationData";
 import { getData } from "./lib/api";
 import { useVoiceGuide } from "./hooks/useVoiceGuide";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import NavigationPage from "./NavigationPage";
 
 export default function App() {
 	const { coords, placeName } = useLocation();
-	const { imageUrl, voiceUrl } = getData(coords);
+	const [imageUrl, setImageUrl] = useState<string>(
+		"https://www.tclf.org/sites/default/files/thumbnails/image/HarvardUniversity-sig.jpg"
+	);
+	const [voiceUrl, setVoiceUrl] = useState<string>(
+		"https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
+	);
+
+	// Fetch voice URL (and image if backend provides a different one) when coords change
+	useEffect(() => {
+		let mounted = true;
+		(async () => {
+			try {
+				const data = await getData(coords);
+				if (!mounted) return;
+				if (data.imageUrl) setImageUrl(data.imageUrl);
+				if (data.voiceUrl) setVoiceUrl(data.voiceUrl);
+			} catch (e) {
+				console.error("getData error:", e);
+			}
+		})();
+		return () => {
+			mounted = false;
+		};
+	}, [coords]);
 	const {
 		startVoiceGuide,
 		stopVoiceGuide,
