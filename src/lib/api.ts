@@ -23,7 +23,6 @@ export async function getData(coords: { lat: number; lng: number }) {
         
         if (!res.ok) throw new Error(`API responded with status ${res.status}`);
         
-        // The API returns an MP3 file directly, so we need to create a blob URL
         const audioBlob = await res.blob();
         const voiceUrl = URL.createObjectURL(audioBlob);
 
