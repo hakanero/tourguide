@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
+import { reverseGeocode } from "../lib/utils";
 
-export function useLocation(timeout = 10000): { lat: number; lng: number } {
-	
-
-	const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+export function useLocation(timeout = 10000): {
+	coords: { lat: number; lng: number };
+	placeName?: string;
+} {
+	const [location, setLocation] = useState<{
+		coords: { lat: number; lng: number };
+		placeName?: string;
+	} | null>(null);
 
 	useEffect(() => {
 		if (!navigator.geolocation) {
@@ -11,10 +16,19 @@ export function useLocation(timeout = 10000): { lat: number; lng: number } {
 			return;
 		}
 
-		const onSuccess = (position: GeolocationPosition) => {
+		const onSuccess = async (position: GeolocationPosition) => {
 			setLocation({
-				lat: position.coords.latitude,
-				lng: position.coords.longitude,
+				coords: {
+					lat: position.coords.latitude,
+					lng: position.coords.longitude,
+				},
+				placeName:
+					(
+						await reverseGeocode({
+							lat: position.coords.latitude,
+							lng: position.coords.longitude,
+						})
+					).split(",")[0] || "Unknown place",
 			});
 		};
 
@@ -31,5 +45,10 @@ export function useLocation(timeout = 10000): { lat: number; lng: number } {
 		navigator.geolocation.getCurrentPosition(onSuccess, onError, options);
 	}, [timeout]);
 
-	return location || { lat: 42.3736, lng: -71.1097 }; // Default to Harvard Yard if location not available
+	return (
+		location || {
+			coords: { lat: 42.3736, lng: -71.1097 },
+			placeName: "Harvard Yard",
+		}
+	); // Default to Harvard Yard if location not available
 }
