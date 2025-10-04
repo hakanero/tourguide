@@ -1,6 +1,6 @@
 export async function getData(coords: { lat: number; lng: number }) {
     // Base backend URL (no trailing slash to make concat predictable)
-    const apilink = "https://tourguidebackend.fly.dev";
+    const apilink = "https://theroamerbackend.fly.dev";
 
     const imageUrl =
         "https://www.tclf.org/sites/default/files/thumbnails/image/HarvardUniversity-sig.jpg";
