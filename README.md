@@ -58,21 +58,23 @@ npm run dev
 
 ## 🗂️ Project Structure
 
+```
 frontend/
 │
-├── public/               # Static assets (icons, images, etc.)
+├── public/
 ├── src/
-│   ├── assets/           # Owl and map pin images
-│   ├── components/       # UI building blocks
-│   ├── hooks/            # Custom React hooks (useLocationData, useVoiceGuide)
-│   ├── pages/            # Main app pages (e.g. NavigationPage.tsx)
-│   ├── App.tsx           # Root application component
-│   └── main.tsx          # Entry point
+│   ├── assets/
+│   ├── components/
+│   ├── hooks/
+│   ├── pages/
+│   ├── App.tsx
+│   └── main.tsx
 │
-├── index.html            # HTML template
-├── package.json          # Dependencies & scripts
-├── vite.config.ts        # Vite configuration
-└── tsconfig.json         # TypeScript settings
+├── index.html
+├── package.json
+├── vite.config.ts
+└── tsconfig.json
+```
 
 ## 🧩 Core Components
 **NavigationPage.tsx**
