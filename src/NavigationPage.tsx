@@ -1,5 +1,5 @@
-import { use, useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import { useEffect, useMemo, useRef } from "react";
+import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import L, { DivIcon } from "leaflet";
 import { useLocation } from "./hooks/useLocationData";
 import { useVoiceGuide } from "./hooks/useVoiceGuide";
