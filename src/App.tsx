@@ -14,9 +14,8 @@ import NavigationPage from "./NavigationPage";
 
 export default function App() {
 	const { coords, placeName } = useLocation();
-	const [voiceUrl, setVoiceUrl] = useState<string>(
-		"https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
-	);
+	const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
+	const [isLoadingAudio, setIsLoadingAudio] = useState(false);
 
 	const {
 		startVoiceGuide,
@@ -31,27 +30,37 @@ export default function App() {
 	// Fetch voice URL (and image if backend provides a different one) when coords change
 	useEffect(() => {
 		let mounted = true;
+		setIsLoadingAudio(true);
+		setVoiceUrl(null);
 		(async () => {
 			try {
+				console.log("Fetching audio for coordinates:", coords.lat, coords.lng);
 				const data = await getData(coords);
 				if (!mounted) return;
-				if (data.voiceUrl) setVoiceUrl(data.voiceUrl);
+				if (data.voiceUrl) {
+					setVoiceUrl(data.voiceUrl);
+				}
 			} catch (e) {
 				console.error("getData error:", e);
+			} finally {
+				if (mounted) {
+					setIsLoadingAudio(false);
+				}
 			}
 		})();
 		return () => {
 			mounted = false;
 		};
-	}, [coords]);
+	}, [coords.lat, coords.lng]);
 
 	// If voice guide is playing and voiceUrl changes, continue playing with new audio
 	useEffect(() => {
 		if (isPlaying && audioRef.current) {
+			console.log("Audio changed while playing, reloading...");
 			audioRef.current.load();
-			audioRef.current.play();
+			audioRef.current.play().catch(err => console.error("Auto-play failed:", err));
 		}
-	}, [voiceUrl, isPlaying, audioRef]);
+	}, [voiceUrl]);
 
 	const [page, setPage] = useState<"home" | "navigation">("home");
 
@@ -104,10 +113,21 @@ export default function App() {
 							<motion.button
 								whileHover={{ scale: 1.05 }}
 								whileTap={{ scale: 0.95 }}
-								className="flex items-center justify-center w-28 h-28 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-lg cursor-pointer"
-								onClick={isPlaying ? pauseVoiceGuide : startVoiceGuide}
+								className={`flex items-center justify-center w-28 h-28 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-lg ${
+									voiceUrl && !isLoadingAudio ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+								}`}
+								onClick={
+									voiceUrl && !isLoadingAudio
+										? isPlaying
+											? pauseVoiceGuide
+											: startVoiceGuide
+										: undefined
+								}
+								disabled={!voiceUrl || isLoadingAudio}
 							>
-								{isPlaying ? (
+								{isLoadingAudio ? (
+									<div className="animate-spin h-11 w-11 border-4 border-gray-900 border-t-transparent rounded-full" />
+								) : isPlaying ? (
 									<PauseIcon
 										size={44}
 										weight="fill"
@@ -136,7 +156,11 @@ export default function App() {
 						</motion.div>
 
 						<p className="mt-6 text-xl text-white font-medium drop-shadow">
-							{isPlaying ? "Stop the tour" : "Start the tour"}
+							{isLoadingAudio
+								? "Loading audio..."
+								: isPlaying
+								? "Stop the tour"
+								: "Start the tour"}
 						</p>
 					</div>
 				)}
@@ -162,7 +186,7 @@ export default function App() {
 			</div>
 
 			<div className="absolute w-96 h-96 bg-white/20 blur-3xl rounded-full -top-20 right-10 pointer-events-none" />
-			<audio ref={audioRef} src={voiceUrl} />
+			{voiceUrl && <audio ref={audioRef} src={voiceUrl} />}
 		</div>
 	);
 }
