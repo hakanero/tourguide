@@ -2,8 +2,6 @@ import {
 	MapPinIcon,
 	PauseIcon,
 	PlayIcon,
-	SkipBackIcon,
-	StopIcon,
 } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { useLocation } from "./hooks/useLocationData";
@@ -19,12 +17,9 @@ export default function App() {
 
 	const {
 		startVoiceGuide,
-		stopVoiceGuide,
 		pauseVoiceGuide,
-		restartVoiceGuide,
 		isPlaying,
 		audioRef,
-		isReset,
 	} = useVoiceGuide();
 
 	// Fetch voice URL (and image if backend provides a different one) when coords change
