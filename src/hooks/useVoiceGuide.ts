@@ -4,7 +4,6 @@ export const useVoiceGuide = () => {
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [isReset, setIsReset] = useState(true);
 	const audioRef = useRef<HTMLAudioElement | null>(null);
-	// Placeholder for voice guide logic
 	const startVoiceGuide = () => {
 		if (audioRef.current) {
 			audioRef.current.play();

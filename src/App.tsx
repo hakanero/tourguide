@@ -24,35 +24,29 @@ export default function App() {
 	const currentLanguageRef = useRef("english");
 	const [visitedCoordinates, setVisitedCoordinates] = useState<Array<{ lat: number; lng: number }>>([]);
 	const hasInitializedCoords = useRef(false);
+	const [transcript, setTranscript] = useState<string>("");
 
 	const { startVoiceGuide, pauseVoiceGuide, isPlaying, audioRef } =
-		useVoiceGuide();	// Fetch voice URL (and image if backend provides a different one) when coords change
+		useVoiceGuide();
 	useEffect(() => {
 		let mounted = true;
 
-		// Check if coordinates have actually changed
 		const coordsChanged =
 			currentCoords.lat !== coords.lat || currentCoords.lng !== coords.lng;
 
 		if (!coordsChanged) return;
 
-		// Add new coordinates to the visited list
 		setVisitedCoordinates(prev => {
-			// Check if this coordinate is already in the list (avoid duplicates)
 			const isDuplicate = prev.some(
 				c => Math.abs(c.lat - coords.lat) < 0.0001 && Math.abs(c.lng - coords.lng) < 0.0001
 			);
 			if (isDuplicate) return prev;
 			
-			// Only add if this is not the Harvard Yard default location OR if we already have coordinates
-			// (meaning this is a subsequent location change)
 			const isHarvardYard = Math.abs(coords.lat - 42.3736) < 0.0001 && Math.abs(coords.lng - (-71.1097)) < 0.0001;
 			if (isHarvardYard && prev.length === 0 && !hasInitializedCoords.current) {
-				// This is the initial Harvard Yard default, don't add it
 				return prev;
 			}
 			
-			// Mark that we've initialized with a real coordinate
 			if (!hasInitializedCoords.current && !isHarvardYard) {
 				hasInitializedCoords.current = true;
 			}
@@ -60,7 +54,6 @@ export default function App() {
 			return [...prev, { lat: coords.lat, lng: coords.lng }];
 		});
 
-		// If we already preloaded this location's audio, use it immediately
 		if (nextVoiceUrl && hasPreloadedNext) {
 			console.log("Using preloaded audio for new coordinates");
 			setVoiceUrl(nextVoiceUrl);
@@ -71,7 +64,6 @@ export default function App() {
 			return;
 		}
 
-		// Otherwise fetch normally
 		setIsLoadingAudio(true);
 		setVoiceUrl(null);
 		(async () => {
@@ -80,9 +72,9 @@ export default function App() {
 				console.log("Fetching audio for coordinates:", coords.lat, coords.lng, "language:", currentLang);
 				const data = await getData(coords, currentLang);
 				if (!mounted) return;
-				// Only use the data if the language hasn't changed during the fetch
 				if (currentLang === currentLanguageRef.current && data.voiceUrl) {
 					setVoiceUrl(data.voiceUrl);
+					setTranscript(data.transcript || "");
 					setCurrentCoords(coords);
 					setHasPreloadedNext(false);
 				}
@@ -107,7 +99,6 @@ export default function App() {
 		language,
 	]);
 
-	// Preload next audio immediately when current audio starts playing
 	useEffect(() => {
 		if (!isPlaying || hasPreloadedNext) return;
 
@@ -115,12 +106,8 @@ export default function App() {
 		setHasPreloadedNext(true);
 
 		const currentLang = currentLanguageRef.current;
-		// Fetch the next audio segment immediately when playback starts
-		// In a real scenario, you might want to predict the next location
-		// For now, we'll just fetch for the same coords to have it ready
 		getData(coords, currentLang)
 			.then((data) => {
-				// Only use the data if the language hasn't changed
 				if (currentLang === currentLanguageRef.current && data.voiceUrl) {
 					setNextVoiceUrl(data.voiceUrl);
 					console.log("Next audio segment preloaded");
@@ -131,9 +118,7 @@ export default function App() {
 			});
 	}, [isPlaying, hasPreloadedNext, coords, language]);
 
-	// Refetch audio when language changes
 	useEffect(() => {
-		// Only run when language actually changes, not on initial mount
 		if (language === previousLanguageRef.current) return;
 		
 		console.log("Language changed from", previousLanguageRef.current, "to", language);
@@ -147,7 +132,6 @@ export default function App() {
 		setNextVoiceUrl(null);
 		setHasPreloadedNext(false);
 		
-		// Pause current audio if playing and reset the playing state
 		if (audioRef.current) {
 			audioRef.current.pause();
 			audioRef.current.currentTime = 0;
@@ -160,10 +144,10 @@ export default function App() {
 				console.log("Fetching audio for new language:", fetchLanguage);
 				const data = await getData(coords, fetchLanguage);
 				if (!mounted) return;
-				// Only set the URL if the language is still the same (no subsequent change happened)
 				if (fetchLanguage === currentLanguageRef.current && data.voiceUrl) {
 					console.log("Setting voice URL for language:", fetchLanguage);
 					setVoiceUrl(data.voiceUrl);
+					setTranscript(data.transcript || "");
 				} else {
 					console.log("Discarding audio for language:", fetchLanguage, "current is:", currentLanguageRef.current);
 				}
@@ -181,7 +165,6 @@ export default function App() {
 		};
 	}, [language, coords, audioRef]);
 
-	// If voice guide is playing and voiceUrl changes, wait for current to finish before playing next
 	useEffect(() => {
 		if (!audioRef.current || !voiceUrl) return;
 
@@ -189,22 +172,17 @@ export default function App() {
 		const currentSrc = audio.src;
 		const newSrc = voiceUrl;
 
-		// Only update if the URL has actually changed
 		if (currentSrc === newSrc) return;
 
 		console.log("Audio URL changed, updating source...");
 		
-		// Always update the src attribute first
 		audio.src = voiceUrl;
 
 		if (isPlaying) {
-			// If currently playing, pause the old audio and load the new one
 			audio.pause();
 			audio.load();
-			// Try to auto-play the new audio
 			audio.play().catch((err) => console.error("Auto-play failed:", err));
 		} else {
-			// If not playing, just load the new audio
 			audio.load();
 		}
 	}, [voiceUrl, isPlaying]);
@@ -292,6 +270,10 @@ export default function App() {
 								: isPlaying
 								? "Stop the tour"
 								: "Start the tour"}
+						</p>
+
+						<p className="mt-4 text-sm text-white/90 max-w-80 drop-shadow max-h-15 overflow-y-auto">
+							{transcript}
 						</p>
 					</div>
 				)}

@@ -28,7 +28,6 @@ export default function NavigationPage({ visitedCoordinates }: NavigationPagePro
 	const { coords } = useLocation();
 	const mapRef = useRef(null);
 
-	// Convert visited coordinates to path for polyline
 	const pathPositions: [number, number][] = visitedCoordinates.map(coord => [coord.lat, coord.lng]);
 
 	return (
