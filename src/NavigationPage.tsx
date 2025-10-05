@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import { useLocation } from "./hooks/useLocationData";
-import L, { DivIcon } from "leaflet";
+import L from "leaflet";
 
 function MapUpdater({ center }: { center: [number, number] }) {
 	const map = useMap();
