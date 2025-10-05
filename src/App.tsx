@@ -14,9 +14,6 @@ import NavigationPage from "./NavigationPage";
 
 export default function App() {
 	const { coords, placeName } = useLocation();
-	const [imageUrl, setImageUrl] = useState<string>(
-		"https://www.tclf.org/sites/default/files/thumbnails/image/HarvardUniversity-sig.jpg"
-	);
 	const [voiceUrl, setVoiceUrl] = useState<string>(
 		"https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
 	);
@@ -28,7 +25,6 @@ export default function App() {
 			try {
 				const data = await getData(coords);
 				if (!mounted) return;
-				if (data.imageUrl) setImageUrl(data.imageUrl);
 				if (data.voiceUrl) setVoiceUrl(data.voiceUrl);
 			} catch (e) {
 				console.error("getData error:", e);
