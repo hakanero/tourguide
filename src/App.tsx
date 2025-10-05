@@ -1,4 +1,10 @@
-import { MapPinIcon, PauseIcon, PlayIcon } from "@phosphor-icons/react";
+import {
+	CompassIcon,
+	GlobeIcon,
+	MapPinIcon,
+	PauseIcon,
+	PlayIcon,
+} from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { useLocation } from "./hooks/useLocationData";
 import { getData } from "./lib/api";
@@ -13,6 +19,7 @@ export default function App() {
 	const [isLoadingAudio, setIsLoadingAudio] = useState(false);
 	const [currentCoords, setCurrentCoords] = useState(coords);
 	const [hasPreloadedNext, setHasPreloadedNext] = useState(false);
+	const [language, setLanguage] = useState("en");
 
 	const { startVoiceGuide, pauseVoiceGuide, isPlaying, audioRef } =
 		useVoiceGuide();
@@ -20,12 +27,13 @@ export default function App() {
 	// Fetch voice URL (and image if backend provides a different one) when coords change
 	useEffect(() => {
 		let mounted = true;
-		
+
 		// Check if coordinates have actually changed
-		const coordsChanged = currentCoords.lat !== coords.lat || currentCoords.lng !== coords.lng;
-		
+		const coordsChanged =
+			currentCoords.lat !== coords.lat || currentCoords.lng !== coords.lng;
+
 		if (!coordsChanged) return;
-		
+
 		// If we already preloaded this location's audio, use it immediately
 		if (nextVoiceUrl && hasPreloadedNext) {
 			console.log("Using preloaded audio for new coordinates");
@@ -36,14 +44,14 @@ export default function App() {
 			setIsLoadingAudio(false);
 			return;
 		}
-		
+
 		// Otherwise fetch normally
 		setIsLoadingAudio(true);
 		setVoiceUrl(null);
 		(async () => {
 			try {
 				console.log("Fetching audio for coordinates:", coords.lat, coords.lng);
-				const data = await getData(coords);
+				const data = await getData(coords, language);
 				if (!mounted) return;
 				if (data.voiceUrl) {
 					setVoiceUrl(data.voiceUrl);
@@ -61,7 +69,14 @@ export default function App() {
 		return () => {
 			mounted = false;
 		};
-	}, [coords.lat, coords.lng, placeName, nextVoiceUrl, hasPreloadedNext, currentCoords]);
+	}, [
+		coords.lat,
+		coords.lng,
+		placeName,
+		nextVoiceUrl,
+		hasPreloadedNext,
+		currentCoords,
+	]);
 
 	// Preload next audio immediately when current audio starts playing
 	useEffect(() => {
@@ -69,30 +84,49 @@ export default function App() {
 
 		console.log("Audio started playing, preloading next segment...");
 		setHasPreloadedNext(true);
-		
+
 		// Fetch the next audio segment immediately when playback starts
 		// In a real scenario, you might want to predict the next location
 		// For now, we'll just fetch for the same coords to have it ready
-		getData(coords).then(data => {
-			if (data.voiceUrl) {
-				setNextVoiceUrl(data.voiceUrl);
-				console.log("Next audio segment preloaded");
-			}
-		}).catch(err => {
-			console.error("Failed to preload next audio:", err);
-		});
+		getData(coords, language)
+			.then((data) => {
+				if (data.voiceUrl) {
+					setNextVoiceUrl(data.voiceUrl);
+					console.log("Next audio segment preloaded");
+				}
+			})
+			.catch((err) => {
+				console.error("Failed to preload next audio:", err);
+			});
 	}, [isPlaying, hasPreloadedNext, coords]);
 
-	// If voice guide is playing and voiceUrl changes, continue playing with new audio
+	// If voice guide is playing and voiceUrl changes, wait for current to finish before playing next
 	useEffect(() => {
-		if (isPlaying && audioRef.current) {
-			console.log("Audio changed while playing, reloading...");
-			audioRef.current.load();
-			audioRef.current
-				.play()
-				.catch((err) => console.error("Auto-play failed:", err));
+		if (!audioRef.current || !voiceUrl) return;
+
+		const audio = audioRef.current;
+
+		if (isPlaying) {
+			console.log("Audio changed while playing, waiting for current to finish...");
+			
+			// Set up listener to play new audio when current one ends
+			const handleEnded = () => {
+				console.log("Current audio finished, loading next audio...");
+				audio.load();
+				audio.play().catch((err) => console.error("Auto-play failed:", err));
+			};
+
+			audio.addEventListener('ended', handleEnded);
+
+			return () => {
+				audio.removeEventListener('ended', handleEnded);
+			};
+		} else {
+			// If not playing, just load the new audio
+			console.log("Audio changed while paused, loading new audio...");
+			audio.load();
 		}
-	}, [voiceUrl]);
+	}, [voiceUrl, isPlaying]);
 
 	const [page, setPage] = useState<"home" | "navigation">("home");
 
@@ -102,9 +136,23 @@ export default function App() {
 			"
 			style={{ backgroundImage: `url("/background.png")` }}
 		>
+			<div className="absolute top-2 right-2 z-10 text-white/80 cursor-pointer flex flex-row items-center gap-2 text-md">
+				<GlobeIcon />
+				<select value={language} onChange={(e) => setLanguage(e.target.value)} className="bg-transparent focus:outline-none">
+					<option value="english">English</option>
+					<option value="spanish">Spanish</option>
+					<option value="french">French</option>
+					<option value="german">German</option>
+					<option value="chinese">Chinese</option>
+					<option value="turkish">Turkish</option>
+				</select>
+			</div>
+			<div className="absolute top-2 left-2 z-10 flex flex-row items-center text-white font-semibold gap-2 text-xl">
+				<CompassIcon size={32} /> Roamer AI
+			</div>
 			<div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" />
 
-			<div className="relative z-10 flex flex-col items-center text-center pt-10 rounded-3xl bg-white/25 backdrop-blur-2xl border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.25)]">
+			<div className="my-10 relative z-10 flex flex-col items-center text-center pt-10 rounded-3xl bg-white/25 backdrop-blur-2xl border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.25)]">
 				<div className="px-6">
 					<h2 className="text-white/90 text-sm tracking-widest uppercase mb-2">
 						Current Location
@@ -119,7 +167,7 @@ export default function App() {
 						<NavigationPage />
 					</div>
 				) : (
-					<div className="px-6 flex flex-col items-center text-center ">
+					<div className="px-6 flex flex-col items-center text-center mb-6">
 						<motion.div
 							transition={{ duration: 0.5 }}
 							className={`flex flex-row items-center space-x-6 ${
@@ -167,7 +215,7 @@ export default function App() {
 					</div>
 				)}
 
-				<div className="h-16 mt-6 w-full flex flex-row items-start justify-center">
+				<div className="h-20 w-full flex flex-row items-start justify-center">
 					<div
 						className={`h-full flex flex-row items-center justify-center text-white border-white/40 w-1/2 cursor-pointer ${
 							page === "navigation" ? "border-t-1" : ""

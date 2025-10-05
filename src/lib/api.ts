@@ -1,8 +1,8 @@
 import { reverseGeocode } from "./utils";
 
-export async function getData(coords: { lat: number; lng: number }) {
+export async function getData(coords: { lat: number; lng: number }, language: string){
 	// Base backend URL (no trailing slash to make concat predictable)
-	const apilink = "https://theroamerbackend.onrender.com/audio";
+	const apilink = "";//"https://theroamerbackend.onrender.com/audio";
 
 	const imageUrl =
 		"https://www.tclf.org/sites/default/files/thumbnails/image/HarvardUniversity-sig.jpg";
@@ -13,6 +13,7 @@ export async function getData(coords: { lat: number; lng: number }) {
 		latitude: coords.lat,
 		longitude: coords.lng,
 		placeName,
+		language,
 	});
 	const url = `${apilink}`;
 
@@ -25,6 +26,7 @@ export async function getData(coords: { lat: number; lng: number }) {
 			latitude: coords.lat,
 			longitude: coords.lng,
 			place_name: placeName,
+			language: language,
 		}),
 	});
 
