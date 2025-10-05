@@ -2,7 +2,7 @@ import { reverseGeocode } from "./utils";
 
 export async function getData(coords: { lat: number; lng: number }) {
 	// Base backend URL (no trailing slash to make concat predictable)
-	const apilink = "http://172.20.10.2:8080/audio"//"https://theroamerbackend.onrender.com/audio";
+	const apilink = "https://theroamerbackend.onrender.com/audio";
 
 	const imageUrl =
 		"https://www.tclf.org/sites/default/files/thumbnails/image/HarvardUniversity-sig.jpg";
