@@ -42,7 +42,16 @@ export function useLocation(timeout = 10000): {
 			maximumAge: 0,
 		};
 
+		// Get location immediately
 		navigator.geolocation.getCurrentPosition(onSuccess, onError, options);
+
+		// Update location every 1 minute 30 seconds (90000 milliseconds)
+		const intervalId = setInterval(() => {
+			navigator.geolocation.getCurrentPosition(onSuccess, onError, options);
+		}, 60000);
+
+		// Cleanup interval on unmount
+		return () => clearInterval(intervalId);
 	}, [timeout]);
 
 	return (

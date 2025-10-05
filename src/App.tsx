@@ -52,10 +52,9 @@ export default function App() {
 
 	return (
 		<div
-			className="relative flex flex-col items-center justify-center h-screen w-full bg-cover bg-center overflow-hidden"
-			style={{
-				backgroundImage: `url('${imageUrl}')`,
-			}}
+			className="relative flex flex-col items-center justify-center h-screen w-full bg-cover bg-center overflow-hidden
+			"
+			style={{ backgroundImage: `url("public/background.png")` }}
 		>
 			<div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" />
 

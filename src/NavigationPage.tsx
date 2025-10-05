@@ -34,7 +34,7 @@ function useMascotIcon(talking = true) {
       <div class="mascot ${stateClass}" style="position: relative; display: grid; place-items: center;">
         <!-- Avatar wrapper with ring & bobbing -->
         <div class="avatar">
-          <img src="/src/assets/owl.png" alt="Guide" class="owl" />
+          <img src="/public/owl.png" alt="Guide" class="owl" />
           <!-- pulsing ring shown only when talking -->
           <div class="ring"></div>
           <!-- pause badge shown when paused -->
@@ -46,7 +46,7 @@ function useMascotIcon(talking = true) {
         </div>
 
         <!-- Pin base -->
-        <img src="/src/assets/maps.png" alt="Pin" class="pin"/>
+        <img src="/public/maps.png" alt="Pin" class="pin"/>
       </div>
     `;
 
