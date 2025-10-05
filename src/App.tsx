@@ -22,11 +22,11 @@ export default function App() {
 	const [language, setLanguage] = useState("english");
 	const previousLanguageRef = useRef("english");
 	const currentLanguageRef = useRef("english");
+	const [visitedCoordinates, setVisitedCoordinates] = useState<Array<{ lat: number; lng: number }>>([]);
+	const hasInitializedCoords = useRef(false);
 
 	const { startVoiceGuide, pauseVoiceGuide, isPlaying, audioRef } =
-		useVoiceGuide();
-
-	// Fetch voice URL (and image if backend provides a different one) when coords change
+		useVoiceGuide();	// Fetch voice URL (and image if backend provides a different one) when coords change
 	useEffect(() => {
 		let mounted = true;
 
@@ -35,6 +35,30 @@ export default function App() {
 			currentCoords.lat !== coords.lat || currentCoords.lng !== coords.lng;
 
 		if (!coordsChanged) return;
+
+		// Add new coordinates to the visited list
+		setVisitedCoordinates(prev => {
+			// Check if this coordinate is already in the list (avoid duplicates)
+			const isDuplicate = prev.some(
+				c => Math.abs(c.lat - coords.lat) < 0.0001 && Math.abs(c.lng - coords.lng) < 0.0001
+			);
+			if (isDuplicate) return prev;
+			
+			// Only add if this is not the Harvard Yard default location OR if we already have coordinates
+			// (meaning this is a subsequent location change)
+			const isHarvardYard = Math.abs(coords.lat - 42.3736) < 0.0001 && Math.abs(coords.lng - (-71.1097)) < 0.0001;
+			if (isHarvardYard && prev.length === 0 && !hasInitializedCoords.current) {
+				// This is the initial Harvard Yard default, don't add it
+				return prev;
+			}
+			
+			// Mark that we've initialized with a real coordinate
+			if (!hasInitializedCoords.current && !isHarvardYard) {
+				hasInitializedCoords.current = true;
+			}
+			
+			return [...prev, { lat: coords.lat, lng: coords.lng }];
+		});
 
 		// If we already preloaded this location's audio, use it immediately
 		if (nextVoiceUrl && hasPreloadedNext) {
@@ -221,7 +245,7 @@ export default function App() {
 
 				{page === "navigation" ? (
 					<div className="w-full h-full">
-						<NavigationPage />
+						<NavigationPage visitedCoordinates={visitedCoordinates} />
 					</div>
 				) : (
 					<div className="px-6 flex flex-col items-center text-center mb-6">
