@@ -1,4 +1,4 @@
-export async function getData(coords: { lat: number; lng: number }) {
+export async function getData(coords: { lat: number; lng: number }, placeName : string) {
 	// Base backend URL (no trailing slash to make concat predictable)
 	const apilink =
 		"https://theroamerbackend.onrender.com/audio";
@@ -16,6 +16,7 @@ export async function getData(coords: { lat: number; lng: number }) {
 		body: JSON.stringify({
 			latitude: coords.lat,
 			longitude: coords.lng,
+            placeName: placeName,
 		}),
 	});
 

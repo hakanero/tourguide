@@ -30,7 +30,7 @@ export default function App() {
 		(async () => {
 			try {
 				console.log("Fetching audio for coordinates:", coords.lat, coords.lng);
-				const data = await getData(coords);
+				const data = await getData(coords, placeName || "Unknown place");
 				if (!mounted) return;
 				if (data.voiceUrl) {
 					setVoiceUrl(data.voiceUrl);
@@ -46,7 +46,7 @@ export default function App() {
 		return () => {
 			mounted = false;
 		};
-	}, [coords.lat, coords.lng]);
+	}, [coords.lat, coords.lng, placeName]);
 
 	// If voice guide is playing and voiceUrl changes, continue playing with new audio
 	useEffect(() => {
