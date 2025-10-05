@@ -94,21 +94,6 @@ export default function App() {
 								isPlaying ? "animate-pulse" : ""
 							}`}
 						>
-							{(isPlaying || !isReset) && (
-								<motion.button
-									initial={{ opacity: 0, x: 20 }}
-									animate={{ opacity: 1, x: 0 }}
-									transition={{ duration: 0.5 }}
-									className={`p-2 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-lg cursor-pointer`}
-								>
-									<SkipBackIcon
-										size={25}
-										weight="fill"
-										className="text-gray-900"
-										onClick={restartVoiceGuide}
-									/>
-								</motion.button>
-							)}
 
 							<motion.button
 								whileHover={{ scale: 1.05 }}
@@ -137,27 +122,11 @@ export default function App() {
 									<PlayIcon size={44} weight="fill" className="text-gray-900" />
 								)}
 							</motion.button>
-
-							{!isReset && (
-								<motion.button
-									initial={{ opacity: 0, x: -20 }}
-									animate={{ opacity: 1, x: 0 }}
-									transition={{ duration: 0.5 }}
-									className="p-2 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-lg cursor-pointer"
-								>
-									<StopIcon
-										size={25}
-										weight="fill"
-										className="text-gray-900"
-										onClick={stopVoiceGuide}
-									/>
-								</motion.button>
-							)}
 						</motion.div>
 
 						<p className="mt-6 text-xl text-white font-medium drop-shadow">
 							{isLoadingAudio
-								? "Loading audio..."
+								? "Loading tour..."
 								: isPlaying
 								? "Stop the tour"
 								: "Start the tour"}
