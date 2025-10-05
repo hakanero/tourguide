@@ -9,7 +9,10 @@ import NavigationPage from "./NavigationPage";
 export default function App() {
 	const { coords, placeName } = useLocation();
 	const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
+	const [nextVoiceUrl, setNextVoiceUrl] = useState<string | null>(null);
 	const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+	const [currentCoords, setCurrentCoords] = useState(coords);
+	const [hasPreloadedNext, setHasPreloadedNext] = useState(false);
 
 	const { startVoiceGuide, pauseVoiceGuide, isPlaying, audioRef } =
 		useVoiceGuide();
@@ -17,6 +20,24 @@ export default function App() {
 	// Fetch voice URL (and image if backend provides a different one) when coords change
 	useEffect(() => {
 		let mounted = true;
+		
+		// Check if coordinates have actually changed
+		const coordsChanged = currentCoords.lat !== coords.lat || currentCoords.lng !== coords.lng;
+		
+		if (!coordsChanged) return;
+		
+		// If we already preloaded this location's audio, use it immediately
+		if (nextVoiceUrl && hasPreloadedNext) {
+			console.log("Using preloaded audio for new coordinates");
+			setVoiceUrl(nextVoiceUrl);
+			setNextVoiceUrl(null);
+			setHasPreloadedNext(false);
+			setCurrentCoords(coords);
+			setIsLoadingAudio(false);
+			return;
+		}
+		
+		// Otherwise fetch normally
 		setIsLoadingAudio(true);
 		setVoiceUrl(null);
 		(async () => {
@@ -26,6 +47,8 @@ export default function App() {
 				if (!mounted) return;
 				if (data.voiceUrl) {
 					setVoiceUrl(data.voiceUrl);
+					setCurrentCoords(coords);
+					setHasPreloadedNext(false);
 				}
 			} catch (e) {
 				console.error("getData error:", e);
@@ -38,7 +61,27 @@ export default function App() {
 		return () => {
 			mounted = false;
 		};
-	}, [coords.lat, coords.lng, placeName]);
+	}, [coords.lat, coords.lng, placeName, nextVoiceUrl, hasPreloadedNext, currentCoords]);
+
+	// Preload next audio immediately when current audio starts playing
+	useEffect(() => {
+		if (!isPlaying || hasPreloadedNext) return;
+
+		console.log("Audio started playing, preloading next segment...");
+		setHasPreloadedNext(true);
+		
+		// Fetch the next audio segment immediately when playback starts
+		// In a real scenario, you might want to predict the next location
+		// For now, we'll just fetch for the same coords to have it ready
+		getData(coords).then(data => {
+			if (data.voiceUrl) {
+				setNextVoiceUrl(data.voiceUrl);
+				console.log("Next audio segment preloaded");
+			}
+		}).catch(err => {
+			console.error("Failed to preload next audio:", err);
+		});
+	}, [isPlaying, hasPreloadedNext, coords]);
 
 	// If voice guide is playing and voiceUrl changes, continue playing with new audio
 	useEffect(() => {
