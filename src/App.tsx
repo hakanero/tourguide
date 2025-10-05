@@ -13,7 +13,7 @@ import { useState, useEffect, useRef } from "react";
 import NavigationPage from "./NavigationPage";
 
 export default function App() {
-	const { coords, placeName } = useLocation();
+	const { coords, placeName, locationError } = useLocation();
 	const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
 	const [nextVoiceUrl, setNextVoiceUrl] = useState<string | null>(null);
 	const [isLoadingAudio, setIsLoadingAudio] = useState(false);
@@ -219,6 +219,11 @@ export default function App() {
 					<h1 className="text-4xl font-semibold text-white mb-10 drop-shadow-md flex flex-row items-center justify-center">
 						<MapPinIcon weight="fill" className="mr-2 h-8" /> {placeName}
 					</h1>
+					{locationError && (
+						<div className="mb-6 p-2 bg-red-500/40 backdrop-blur-sm rounded-lg border-1 border-red-400/80 text-white text-sm">
+							⚠️ {locationError}
+						</div>
+					)}
 				</div>
 
 				{page === "navigation" ? (
