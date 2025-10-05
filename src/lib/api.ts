@@ -1,6 +1,6 @@
 export async function getData(coords: { lat: number; lng: number }) {
     // Base backend URL (no trailing slash to make concat predictable)
-    const apilink = "theroamerbackend-8a8yra3n5-hakaneros-projects.vercel.app";
+    const apilink = "https://theroamerbackend-8a8yra3n5-hakaneros-projects.vercel.app";
 
     const imageUrl =
         "https://www.tclf.org/sites/default/files/thumbnails/image/HarvardUniversity-sig.jpg";
