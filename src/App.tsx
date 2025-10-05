@@ -1,8 +1,4 @@
-import {
-	MapPinIcon,
-	PauseIcon,
-	PlayIcon,
-} from "@phosphor-icons/react";
+import { MapPinIcon, PauseIcon, PlayIcon } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { useLocation } from "./hooks/useLocationData";
 import { getData } from "./lib/api";
@@ -15,12 +11,8 @@ export default function App() {
 	const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
 	const [isLoadingAudio, setIsLoadingAudio] = useState(false);
 
-	const {
-		startVoiceGuide,
-		pauseVoiceGuide,
-		isPlaying,
-		audioRef,
-	} = useVoiceGuide();
+	const { startVoiceGuide, pauseVoiceGuide, isPlaying, audioRef } =
+		useVoiceGuide();
 
 	// Fetch voice URL (and image if backend provides a different one) when coords change
 	useEffect(() => {
@@ -30,7 +22,7 @@ export default function App() {
 		(async () => {
 			try {
 				console.log("Fetching audio for coordinates:", coords.lat, coords.lng);
-				const data = await getData(coords, placeName || "Unknown place");
+				const data = await getData(coords);
 				if (!mounted) return;
 				if (data.voiceUrl) {
 					setVoiceUrl(data.voiceUrl);
@@ -53,7 +45,9 @@ export default function App() {
 		if (isPlaying && audioRef.current) {
 			console.log("Audio changed while playing, reloading...");
 			audioRef.current.load();
-			audioRef.current.play().catch(err => console.error("Auto-play failed:", err));
+			audioRef.current
+				.play()
+				.catch((err) => console.error("Auto-play failed:", err));
 		}
 	}, [voiceUrl]);
 
@@ -89,12 +83,13 @@ export default function App() {
 								isPlaying ? "animate-pulse" : ""
 							}`}
 						>
-
 							<motion.button
 								whileHover={{ scale: 1.05 }}
 								whileTap={{ scale: 0.95 }}
 								className={`flex items-center justify-center w-28 h-28 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 shadow-lg ${
-									voiceUrl && !isLoadingAudio ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+									voiceUrl && !isLoadingAudio
+										? "cursor-pointer"
+										: "cursor-not-allowed opacity-50"
 								}`}
 								onClick={
 									voiceUrl && !isLoadingAudio
