@@ -18,6 +18,16 @@ export default function App() {
 		"https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"
 	);
 
+	const {
+		startVoiceGuide,
+		stopVoiceGuide,
+		pauseVoiceGuide,
+		restartVoiceGuide,
+		isPlaying,
+		audioRef,
+		isReset,
+	} = useVoiceGuide();
+
 	// Fetch voice URL (and image if backend provides a different one) when coords change
 	useEffect(() => {
 		let mounted = true;
@@ -34,15 +44,14 @@ export default function App() {
 			mounted = false;
 		};
 	}, [coords]);
-	const {
-		startVoiceGuide,
-		stopVoiceGuide,
-		pauseVoiceGuide,
-		restartVoiceGuide,
-		isPlaying,
-		audioRef,
-		isReset,
-	} = useVoiceGuide();
+
+	// If voice guide is playing and voiceUrl changes, continue playing with new audio
+	useEffect(() => {
+		if (isPlaying && audioRef.current) {
+			audioRef.current.load();
+			audioRef.current.play();
+		}
+	}, [voiceUrl, isPlaying, audioRef]);
 
 	const [page, setPage] = useState<"home" | "navigation">("home");
 
@@ -50,7 +59,7 @@ export default function App() {
 		<div
 			className="relative flex flex-col items-center justify-center h-screen w-full bg-cover bg-center overflow-hidden
 			"
-			style={{ backgroundImage: `url("public/background.png")` }}
+			style={{ backgroundImage: `url("/background.png")` }}
 		>
 			<div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" />
 
