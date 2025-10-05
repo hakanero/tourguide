@@ -24,12 +24,16 @@ export async function getData(coords: { lat: number; lng: number }) {
 		body: JSON.stringify({
 			latitude: coords.lat,
 			longitude: coords.lng,
-			placeName: placeName,
+			place_name: placeName,
 		}),
 	});
 
 	console.log("API Response status:", res.status);
-	if (!res.ok) throw new Error(`API responded with status ${res.status}`);
+	if (!res.ok) {
+		const errorText = await res.text();
+		console.error("API Error Response:", errorText);
+		throw new Error(`API responded with status ${res.status}: ${errorText}`);
+	}
 
 	const audioBlob = await res.blob();
 	console.log(
