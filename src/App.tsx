@@ -26,6 +26,8 @@ export default function App() {
 	const hasInitializedCoords = useRef(false);
 	const [transcript, setTranscript] = useState<string>("");
 
+	const languages = ["english", "spanish", "french", "german", "chinese", "turkish", "hindi", "arabic", "russian", "korean"];
+
 	const { startVoiceGuide, pauseVoiceGuide, isPlaying, audioRef } =
 		useVoiceGuide();
 	useEffect(() => {
@@ -198,12 +200,11 @@ export default function App() {
 			<div className="absolute top-2 right-2 z-10 text-white/80 cursor-pointer flex flex-row items-center gap-2 text-md">
 				<GlobeIcon />
 				<select value={language} onChange={(e) => setLanguage(e.target.value)} className="bg-transparent focus:outline-none">
-					<option value="english">English</option>
-					<option value="spanish">Spanish</option>
-					<option value="french">French</option>
-					<option value="german">German</option>
-					<option value="chinese">Chinese</option>
-					<option value="turkish">Turkish</option>
+					{languages.map((lang) => (
+						<option key={lang} value={lang}>
+							{lang.charAt(0).toUpperCase() + lang.slice(1)}
+						</option>
+					))}
 				</select>
 			</div>
 			<div className="absolute top-2 left-2 z-10 flex flex-row items-center text-white font-semibold gap-2 text-xl">
