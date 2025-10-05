@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { useLocation } from "./hooks/useLocationData";
 import { getData } from "./lib/api";
 import { useVoiceGuide } from "./hooks/useVoiceGuide";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import NavigationPage from "./NavigationPage";
 
 export default function App() {
@@ -19,7 +19,9 @@ export default function App() {
 	const [isLoadingAudio, setIsLoadingAudio] = useState(false);
 	const [currentCoords, setCurrentCoords] = useState(coords);
 	const [hasPreloadedNext, setHasPreloadedNext] = useState(false);
-	const [language, setLanguage] = useState("en");
+	const [language, setLanguage] = useState("english");
+	const previousLanguageRef = useRef("english");
+	const currentLanguageRef = useRef("english");
 
 	const { startVoiceGuide, pauseVoiceGuide, isPlaying, audioRef } =
 		useVoiceGuide();
@@ -50,10 +52,12 @@ export default function App() {
 		setVoiceUrl(null);
 		(async () => {
 			try {
-				console.log("Fetching audio for coordinates:", coords.lat, coords.lng);
-				const data = await getData(coords, language);
+				const currentLang = currentLanguageRef.current;
+				console.log("Fetching audio for coordinates:", coords.lat, coords.lng, "language:", currentLang);
+				const data = await getData(coords, currentLang);
 				if (!mounted) return;
-				if (data.voiceUrl) {
+				// Only use the data if the language hasn't changed during the fetch
+				if (currentLang === currentLanguageRef.current && data.voiceUrl) {
 					setVoiceUrl(data.voiceUrl);
 					setCurrentCoords(coords);
 					setHasPreloadedNext(false);
@@ -76,6 +80,7 @@ export default function App() {
 		nextVoiceUrl,
 		hasPreloadedNext,
 		currentCoords,
+		language,
 	]);
 
 	// Preload next audio immediately when current audio starts playing
@@ -85,12 +90,14 @@ export default function App() {
 		console.log("Audio started playing, preloading next segment...");
 		setHasPreloadedNext(true);
 
+		const currentLang = currentLanguageRef.current;
 		// Fetch the next audio segment immediately when playback starts
 		// In a real scenario, you might want to predict the next location
 		// For now, we'll just fetch for the same coords to have it ready
-		getData(coords, language)
+		getData(coords, currentLang)
 			.then((data) => {
-				if (data.voiceUrl) {
+				// Only use the data if the language hasn't changed
+				if (currentLang === currentLanguageRef.current && data.voiceUrl) {
 					setNextVoiceUrl(data.voiceUrl);
 					console.log("Next audio segment preloaded");
 				}
@@ -98,32 +105,82 @@ export default function App() {
 			.catch((err) => {
 				console.error("Failed to preload next audio:", err);
 			});
-	}, [isPlaying, hasPreloadedNext, coords]);
+	}, [isPlaying, hasPreloadedNext, coords, language]);
+
+	// Refetch audio when language changes
+	useEffect(() => {
+		// Only run when language actually changes, not on initial mount
+		if (language === previousLanguageRef.current) return;
+		
+		console.log("Language changed from", previousLanguageRef.current, "to", language);
+		previousLanguageRef.current = language;
+		currentLanguageRef.current = language;
+		
+		let mounted = true;
+
+		setIsLoadingAudio(true);
+		setVoiceUrl(null);
+		setNextVoiceUrl(null);
+		setHasPreloadedNext(false);
+		
+		// Pause current audio if playing and reset the playing state
+		if (audioRef.current) {
+			audioRef.current.pause();
+			audioRef.current.currentTime = 0;
+			audioRef.current.src = "";
+		}
+
+		(async () => {
+			try {
+				const fetchLanguage = language;
+				console.log("Fetching audio for new language:", fetchLanguage);
+				const data = await getData(coords, fetchLanguage);
+				if (!mounted) return;
+				// Only set the URL if the language is still the same (no subsequent change happened)
+				if (fetchLanguage === currentLanguageRef.current && data.voiceUrl) {
+					console.log("Setting voice URL for language:", fetchLanguage);
+					setVoiceUrl(data.voiceUrl);
+				} else {
+					console.log("Discarding audio for language:", fetchLanguage, "current is:", currentLanguageRef.current);
+				}
+			} catch (e) {
+				console.error("Language change getData error:", e);
+			} finally {
+				if (mounted) {
+					setIsLoadingAudio(false);
+				}
+			}
+		})();
+
+		return () => {
+			mounted = false;
+		};
+	}, [language, coords, audioRef]);
 
 	// If voice guide is playing and voiceUrl changes, wait for current to finish before playing next
 	useEffect(() => {
 		if (!audioRef.current || !voiceUrl) return;
 
 		const audio = audioRef.current;
+		const currentSrc = audio.src;
+		const newSrc = voiceUrl;
+
+		// Only update if the URL has actually changed
+		if (currentSrc === newSrc) return;
+
+		console.log("Audio URL changed, updating source...");
+		
+		// Always update the src attribute first
+		audio.src = voiceUrl;
 
 		if (isPlaying) {
-			console.log("Audio changed while playing, waiting for current to finish...");
-			
-			// Set up listener to play new audio when current one ends
-			const handleEnded = () => {
-				console.log("Current audio finished, loading next audio...");
-				audio.load();
-				audio.play().catch((err) => console.error("Auto-play failed:", err));
-			};
-
-			audio.addEventListener('ended', handleEnded);
-
-			return () => {
-				audio.removeEventListener('ended', handleEnded);
-			};
+			// If currently playing, pause the old audio and load the new one
+			audio.pause();
+			audio.load();
+			// Try to auto-play the new audio
+			audio.play().catch((err) => console.error("Auto-play failed:", err));
 		} else {
 			// If not playing, just load the new audio
-			console.log("Audio changed while paused, loading new audio...");
 			audio.load();
 		}
 	}, [voiceUrl, isPlaying]);
@@ -236,7 +293,7 @@ export default function App() {
 			</div>
 
 			<div className="absolute w-96 h-96 bg-white/20 blur-3xl rounded-full -top-20 right-10 pointer-events-none" />
-			{voiceUrl && <audio ref={audioRef} src={voiceUrl} />}
+			<audio ref={audioRef} />
 		</div>
 	);
 }
