@@ -7,7 +7,7 @@ export async function getData(coords: { lat: number; lng: number }) {
 	const imageUrl =
 		"https://www.tclf.org/sites/default/files/thumbnails/image/HarvardUniversity-sig.jpg";
 
-	const placeName = reverseGeocode(coords);
+	const placeName = await reverseGeocode(coords);
 
 	console.log("API Request - Sending coordinates:", {
 		latitude: coords.lat,
